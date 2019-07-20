@@ -1,6 +1,6 @@
 {
    "name": "@scrypted/home-assistant",
-   "version": "0.0.1",
+   "version": "0.0.2",
    "scripts": {
       "prepublishOnly": "NODE_ENV=production scrypted-webpack",
       "prescrypted-vscode-launch": "scrypted-webpack",
@@ -10,6 +10,12 @@
       "scrypted-deploy": "scrypted-deploy",
       "scrypted-webpack": "scrypted-webpack"
    },
+   "keywords": [
+      "hass",
+      "home assistant",
+      "scrypted",
+      "plugin"
+   ],
    "scrypted": {
       "name": "Home Assistant Bridge",
       "type": "Device",
