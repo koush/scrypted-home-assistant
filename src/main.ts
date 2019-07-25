@@ -4,8 +4,6 @@
 import sdk, { Device, DeviceProvider, ScryptedDeviceBase, ScryptedDeviceType, Settings, Setting } from '@scrypted/sdk';
 import { Auth, createConnection, subscribeEntities, Connection } from "home-assistant-js-websocket";
 import { HassBase } from './base';
-import { access } from 'fs';
-import { loadavg } from 'os';
 const { deviceManager } = sdk;
 
 var entityTypes = {};
@@ -33,10 +31,11 @@ class Hass extends ScryptedDeviceBase implements DeviceProvider, Settings {
     getSettings(): Setting[] {
         return [
             {
-                title: "Access Token",
+                title: "Long Lived Access Token",
                 key: "access_token",
+                type: "password",
                 value: localStorage.getItem('access_token'),
-            }
+            },
         ]
     }
     putSetting(key: string, value: string | number | boolean): void {
