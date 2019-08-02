@@ -4,7 +4,7 @@
 import sdk, { Device, DeviceProvider, ScryptedDeviceBase, ScryptedDeviceType, Settings, Setting } from '@scrypted/sdk';
 import { Auth, createConnection, subscribeEntities, Connection } from "home-assistant-js-websocket";
 import { HassBase } from './base';
-const { deviceManager } = sdk;
+const { log, deviceManager } = sdk;
 
 var entityTypes = {};
 
@@ -36,11 +36,17 @@ class Hass extends ScryptedDeviceBase implements DeviceProvider, Settings {
                 type: "password",
                 value: localStorage.getItem('access_token'),
             },
+            {
+                title: 'Home Assistant Address',
+                key: 'address',
+                value: localStorage.getItem('address'),
+                placeholder: 'http://192.168.1.100:8123'
+            }
         ]
     }
     putSetting(key: string, value: string | number | boolean): void {
         localStorage.setItem(key, value.toString());
-        if (key === 'access_token') {
+        if (key === 'access_token' || key === 'address') {
             this.connect();
         }
     }
@@ -51,6 +57,13 @@ class Hass extends ScryptedDeviceBase implements DeviceProvider, Settings {
             return;
         }
 
+        const hassUrl = localStorage.getItem('address');
+        if (!hassUrl) {
+            this.log.a('Please enter the Home Assistant address and port in the plugin Settings.');
+            return;
+        }
+        this.log.clearAlerts();
+
         if (this.connection) {
             this.connection.close();
             this.connection = undefined;
@@ -60,24 +73,27 @@ class Hass extends ScryptedDeviceBase implements DeviceProvider, Settings {
             access_token,
             // Set expires to very far in the future
             expires: new Date(new Date().getTime() + 1e11),
-            hassUrl: "http://192.168.2.7:8123",
+            hassUrl,
         });
 
-        const connection = await createConnection({ auth });
+        const connection = await createConnection({ auth })
+        .catch(err => {
+            log.a(`Error connecting to home assistant: ${err}`);
+        });
         subscribeEntities(connection, entities => {
             var deviceFound = false;
             // build up a device manifest every time.
             const devices = Object.values(entities)
-            // find the type
+                // find the type
                 .map(entity => ({
                     type: entityTypes[entity.entity_id.split('.')[0]],
-                    entity: entity, 
+                    entity: entity,
                 }))
                 // filter nulls
                 .filter(pair => pair.type)
                 // map to scrypted devices
                 .map(pair => {
-                    const {entity, type} = pair;
+                    const { entity, type } = pair;
 
                     var scryptedDevice: HassBase = this.devices.get(entity.entity_id);
                     if (!scryptedDevice) {
